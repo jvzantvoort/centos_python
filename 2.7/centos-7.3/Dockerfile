@@ -1,3 +1,14 @@
+#===============================================================================
+#
+#         FILE: centos_python/2.7/centos-7.3/Dockerfile
+#
+#  DESCRIPTION:  Derived from the upstream python:2.7.13 but built for centos7
+#                and added make test to the build.
+#
+#       AUTHOR:  John van Zantvoort (jvzantvoort), John@vanZantvoort.org
+#      CREATED:  24-Jun-2017
+#===============================================================================
+
 FROM centos:7.3.1611
 MAINTAINER John van Zantvoort "John@vanzantvoort.org"
 
@@ -12,14 +23,28 @@ ENV GPG_KEY C01E1CAD5EA2C4F0B8E3571504C367C218ADD4FF
 ENV PYTHON_VERSION 2.7.13
 
 RUN set -x && yum makecache fast && \
-        yum -y -q install libxml2-devel \
+        yum -y -q install \
+                  binutils-devel \
+                  bzip2 \
                   bzip2-devel \
-                  sqlite-devel \
-                  openssl-devel \
-                  zlib-devel \
-                  readline-devel \
-                  ncurses-devel \
+                  expat-devel \
+                  findutils \
+                  gcc-c++ \
+                  gdbm-devel \
+                  glibc-devel \
+                  gmp-devel \
+                  libdb-devel \
                   libffi-devel \
+                  libGL-devel \
+                  libX11-devel \
+                  libxml2-devel \
+                  ncurses-devel \
+                  openssl-devel \
+                  pkgconfig \
+                  readline-devel \
+                  sqlite-devel \
+                  tar \
+                  zlib-devel \
         \
 	&& curl -SL "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz" -o python.tar.xz \
 	&& curl -SL "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz.asc" -o python.tar.xz.asc \
@@ -30,13 +55,19 @@ RUN set -x && yum makecache fast && \
 	&& mkdir -p /usr/src/python \
 	&& tar -xJC /usr/src/python --strip-components=1 -f python.tar.xz \
 	&& rm python.tar.xz \
-	\
 	&& cd /usr/src/python \
 	&& ./configure --enable-shared --enable-unicode=ucs4 \
 	&& make -j$(nproc) \
 	&& make install \
 	&& ldconfig \
 	&& yum clean all
+
+# added a skip patch to the source because that test relies on the kernel.
+ADD python_test_gdb.patch /tmp/python_test_gdb.patch
+RUN set -xv \
+	&& cd /usr/src/python \
+	&& patch -p 0 < /tmp/python_test_gdb.patch \
+	&& make test
 
 #NOTE: unlike the upstream version we keep the develeopment pacakges and
 #testfiles for now.
