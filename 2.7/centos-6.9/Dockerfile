@@ -9,7 +9,7 @@
 #      CREATED:  24-Jun-2017
 #===============================================================================
 
-FROM centos:7.3.1611
+FROM centos:6.9
 MAINTAINER John van Zantvoort "John@vanzantvoort.org"
 
 ENV PATH /usr/local/bin:$PATH
@@ -45,7 +45,6 @@ RUN set -x && yum makecache fast && \
                   sqlite-devel \
                   tar \
                   zlib-devel \
-        \
 	&& curl -SL "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz" -o python.tar.xz \
 	&& curl -SL "https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz.asc" -o python.tar.xz.asc \
 	&& export GNUPGHOME="$(mktemp -d)" \
@@ -59,6 +58,7 @@ RUN set -x && yum makecache fast && \
 	&& ./configure --enable-shared --enable-unicode=ucs4 \
 	&& make -j$(nproc) \
 	&& make install \
+	&& printf "/usr/local/lib\n/usr/local/lib64\n" > /etc/ld.so.conf.d/local.conf  \
 	&& ldconfig \
 	&& yum clean all
 
@@ -76,17 +76,16 @@ RUN set -xv \
 ENV PYTHON_PIP_VERSION 9.0.1
 
 # install "virtualenv", since the vast majority of users of this image will want it
-RUN set -ex; \
-	\
-	curl -SL -o get-pip.py 'https://bootstrap.pypa.io/get-pip.py'; \
-	\
-	/usr/local/bin/python get-pip.py \
+RUN curl -SL -o get-pip.py 'https://bootstrap.pypa.io/get-pip.py' && \
+	python get-pip.py \
 		--disable-pip-version-check \
 		--no-cache-dir \
 		"pip==$PYTHON_PIP_VERSION" \
 	; \
-	/usr/local/bin/pip --version; \
+	pip --version; \
 	rm -f get-pip.py; \
-	/usr/local/bin/pip install --no-cache-dir virtualenv
+	pip install --no-cache-dir virtualenv && \
+	pip install --no-cache-dir pep8 && \
+	pip install --no-cache-dir pylint
 
 CMD ["/bin/bash"]

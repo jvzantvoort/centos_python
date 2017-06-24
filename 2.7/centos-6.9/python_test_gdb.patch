@@ -1,0 +1,12 @@
+--- Lib/test/test_gdb.py.orig   2017-06-24 14:07:47.658349413 +0200
++++ Lib/test/test_gdb.py        2017-06-24 14:14:48.436709156 +0200
+@@ -114,6 +114,8 @@
+
+ HAS_PYUP_PYDOWN = gdb_has_frame_select()
+
++@unittest.skipIf(os.path.exists('/.dockerenv'),
++                 "This is a docker image")
+ class DebuggerTests(unittest.TestCase):
+
+     """Test that the debugger can debug Python."""
+
